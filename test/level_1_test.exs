@@ -14,8 +14,7 @@ defmodule Level1Test do
     assert place.name == "hall" and place.money == 100
   end
 
-
-  test "checking moves" do
+  test "checking moves using new transitions" do
     ball = %GameItem{name: "ball"}
 
     hall = %Place{name: "hall", money: 0}
@@ -25,42 +24,48 @@ defmodule Level1Test do
     drug_store = %Place{name: "drug store", money: 0}
     bus_station = %Place{name: "bus station", money: 0}
     end_game = closet
-
+    needed_items = %{
+      drug_store => [ball]
+    }
     transitions = %{ hall => [
-        %Transition{destination: street},
-        %Transition{destination: kitchen},
-        %Transition{destination: closet}
+        street,
+        kitchen,
+        closet
       ],
       closet => [
-        %Transition{destination: hall},
+        hall
       ],
       kitchen => [
-        %Transition{destination: hall},
+        hall
       ],
       street => [
-        %Transition{destination: hall},
-        %Transition{destination: drug_store, requiered: [ball]},
-        %Transition{destination: bus_station},
+        hall,
+        drug_store,
+        bus_station
       ]
     }
 
     game = %Game{current_place: hall, score: 0}
 
-    possible_moves = valid_moves(game, transitions)
-    game =  go_to("st", game, transitions)
-    game =  go_to("h", game, transitions)
-    game =  go_to("c", game, transitions)
-    game =  go_to("h", game, transitions)
-    game =  go_to("c", game, transitions)
-    game =  go_to("h", game, transitions)
-    game =  go_to("k", game, transitions)
-    game =  go_to("wwww", game, transitions)
-    game =  go_to("h", game, transitions)
+    possible_moves = valid_moves(game, transitions, needed_items)
+    game =  go_to("st", game, transitions, needed_items)
+    game =  go_to("h", game, transitions, needed_items)
+    game =  go_to("c", game, transitions, needed_items)
+    game =  go_to("h", game, transitions, needed_items)
+    game =  go_to("c", game, transitions, needed_items)
+    game =  go_to("h", game, transitions, needed_items)
+    game =  go_to("k", game, transitions, needed_items)
+    game =  go_to("wwww", game, transitions, needed_items)
+    game =  go_to("h", game, transitions, needed_items)
     visible_places = what_do_you_see(game, transitions)
 
     assert "street" in Enum.map(possible_moves, &(&1.name))
     assert "drug store" not in Enum.map(possible_moves, &(&1.name))
     assert "You see a closet. "  in Enum.map(visible_places, &(&1))
-    assert go_to("street", game, transitions).current_place == street
+    assert go_to("street", game, transitions, needed_items).current_place == street
+    game =  go_to("st", game, transitions, needed_items)
+    assert go_to("drug", game, transitions, needed_items).current_place == street
+    game = %Game{current_place: street, bag: [ball]}
+    assert go_to("drug", game, transitions, needed_items).current_place == drug_store
   end
 end

@@ -1,17 +1,26 @@
 defmodule GameEngine do
   def what_do_you_see(game, transitions) do
-    Enum.map(transitions[game.current_place], fn transition ->
-      "You see #{transition.destination.article} #{transition.destination.name}. "
+    Enum.map(transitions[game.current_place], fn place ->
+      "You see #{place.article} #{place.name}. "
     end)
   end
 
-  def valid_moves(game, transitions) do
-    Enum.map(transitions[game.current_place], & &1.destination)
+  def has_all_needed_items(items, bag) do
+    Enum.all?(items, &(&1 in bag))
   end
 
-  def go_to(user_input, game, transitions) do
+  def valid_moves(game, transitions, needed_items) do
+    Enum.filter(transitions[game.current_place], fn destination ->
+        if needed_items[destination] == nil or has_all_needed_items(needed_items[destination],game.bag) do
+          destination
+        end
+    end)
+  end
+
+
+  def go_to(user_input, game, transitions, needed_items) do
     destination =
-      Enum.filter(valid_moves(game, transitions), &String.starts_with?(&1.name, user_input))
+      Enum.filter(valid_moves(game, transitions, needed_items), &String.starts_with?(&1.name, user_input))
 
     case destination do
       [head | _] ->
@@ -24,6 +33,7 @@ defmodule GameEngine do
             visited: [head.name | game.visited]
           }
         end
+
       _ ->
         game
     end
