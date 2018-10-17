@@ -16,31 +16,31 @@ defmodule Level1Test do
 
 
   test "checking moves" do
+    ball = %GameItem{name: "ball"}
 
     hall = %Place{name: "hall", money: 0}
     street = %Place{name: "street", money: 0}
-    closet = %Place{name: "closet", money: 100, preposition: "in"}
+    closet = %Place{name: "closet", items: [ball], money: 100, preposition: "in"}
     kitchen = %Place{name: "kitchen", money: 10}
     drug_store = %Place{name: "drug store", money: 0}
     bus_station = %Place{name: "bus station", money: 0}
     end_game = closet
 
-
     transitions = %{ hall => [
-        %Transition{destination: street, requiered: []},
-        %Transition{destination: kitchen, requiered: []},
-        %Transition{destination: closet, requiered: []}
+        %Transition{destination: street},
+        %Transition{destination: kitchen},
+        %Transition{destination: closet}
       ],
       closet => [
-        %Transition{destination: hall, requiered: []},
+        %Transition{destination: hall},
       ],
       kitchen => [
-        %Transition{destination: hall, requiered: []},
+        %Transition{destination: hall},
       ],
       street => [
-        %Transition{destination: hall, requiered: []},
-        %Transition{destination: drug_store, requiered: []},
-        %Transition{destination: bus_station, requiered: []},
+        %Transition{destination: hall},
+        %Transition{destination: drug_store, requiered: [ball]},
+        %Transition{destination: bus_station},
       ]
     }
 
@@ -61,6 +61,6 @@ defmodule Level1Test do
     assert "street" in Enum.map(possible_moves, &(&1.name))
     assert "drug store" not in Enum.map(possible_moves, &(&1.name))
     assert "You see a closet. "  in Enum.map(visible_places, &(&1))
-    assert go_to("st", game, transitions) == street
+    assert go_to("street", game, transitions).current_place == street
   end
 end
