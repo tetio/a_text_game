@@ -1,16 +1,16 @@
-# SomeData
+# A text game
 
 **TODO: Add description**
 
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `some_data` to your list of dependencies in `mix.exs`:
+by adding `a_text_game` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:some_data, "~> 0.1.0"}
+    {:a_text_game, "~> 0.1.0"}
   ]
 end
 ```
