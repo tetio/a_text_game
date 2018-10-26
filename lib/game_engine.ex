@@ -1,16 +1,14 @@
 defmodule GameEngine do
   def what_do_you_see(game, transitions) do
     case transitions[game.current_place] do
-     [_h | _]  ->
-      Enum.map(transitions[game.current_place], fn place ->
-        "You see #{place.article} #{place.name}. "
-      end)
+      [_h | _] ->
+        Enum.map(transitions[game.current_place], fn place ->
+          "You see #{place.article} #{place.name}. "
+        end)
 
-      
       _ ->
         "You see nothing..."
     end
-
   end
 
   def where_you_are(game) do
@@ -30,17 +28,18 @@ defmodule GameEngine do
     end)
   end
 
-  def go_to(user_input, game, transitions, needed_items) do
+  def goto_command(user_input, game, transitions, needed_items) do
+    [_verb | place] = String.split(user_input, " ")
     destinations =
       Enum.filter(
         valid_moves(game, transitions, needed_items),
-        &String.starts_with?(&1.name, user_input)
+        &String.starts_with?(&1.name, place)
       )
 
     case destinations do
       [destination | _] ->
         if destination.name in game.visited do
-          %Game{current_place: destination, score: game.score, visited: game.visited}
+          %Game{current_place: destination,  bag: game.bag, score: game.score, visited: game.visited}
         else
           %Game{
             current_place: destination,
@@ -55,12 +54,25 @@ defmodule GameEngine do
     end
   end
 
+  def use_command(user_input, game) do
+    [_verb | subject ] = String.split(user_input, " ")
+
+    # TODO check if player has the object
+    [object|_] = Enum.filter(game.bag, &(String.starts_with?(&1.name, subject)))
+    case object.name do
+      "ball" -> IO.puts "You play with the ball"
+      _-> IO.puts "I don't know what do you want to use."
+    end
+    game
+  end
+
+
   def is_game_over?(game, end_game) do
     # and game.score > 1000)
     game.current_place == end_game
   end
 
-  def user_whants_to_quit?(user_input) do
+  def user_wants_to_quit?(user_input) do
     user_input == "quit"
   end
 
@@ -69,7 +81,9 @@ defmodule GameEngine do
 
     case game.bag do
       [_h | _] ->
-        s <> " and you have " <> Enum.join(Enum.map(game.bag, & &1.article <> " " <> &1.name), ", ") <> "."
+        s <>
+          " and you have " <>
+          Enum.join(Enum.map(game.bag, &(&1.article <> " " <> &1.name)), ", ") <> "."
 
       [] ->
         s
@@ -79,6 +93,15 @@ defmodule GameEngine do
   def display_game_data(game, transitions) do
     IO.puts(where_you_are(game) <> you_have(game))
     IO.puts(what_do_you_see(game, transitions))
+  end
+
+  def dispatch(user_input) do
+    cond do
+      String.starts_with?(user_input, "goto") -> :goto
+      String.starts_with?(user_input, "open") -> :open
+      String.starts_with?(user_input, "use") -> :use
+      true -> :unknown
+    end
   end
 
   def main_loop(game, transitions, end_game, needed_items) do
@@ -91,17 +114,34 @@ defmodule GameEngine do
     else
       user_command = IO.gets("game:>") |> String.trim()
 
-      if user_whants_to_quit?(user_command) do
+      if user_wants_to_quit?(user_command) do
         IO.puts("*************************************")
         IO.puts("***          Good bye!            ***")
         IO.puts("*************************************")
       else
-        main_loop(
-          go_to(user_command, game, transitions, needed_items),
-          transitions,
-          end_game,
-          needed_items
-        )
+        case dispatch(user_command) do
+          :goto ->
+            main_loop(
+              goto_command(user_command, game, transitions, needed_items),
+              transitions,
+              end_game,
+              needed_items
+            )
+            :use ->
+              main_loop(
+                use_command(user_command, game),
+                transitions,
+                end_game,
+                needed_items
+              )
+          _ ->
+            main_loop(
+            game,
+            transitions,
+            end_game,
+            needed_items
+          )
+        end
       end
     end
   end
