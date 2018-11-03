@@ -1,3 +1,3 @@
 defmodule Place do
-  defstruct name: "room", items: [], money: 0, preposition: "at", article: "a"
+  defstruct name: "room", items: [], money: 0, preposition: "at", article: "a", containers: []
 end

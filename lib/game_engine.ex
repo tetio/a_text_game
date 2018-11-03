@@ -1,13 +1,40 @@
 defmodule GameEngine do
   def what_do_you_see(game, transitions) do
+    look_at_place(game, transitions) <> look_in_containers(game.current_place.containers)
+  end
+
+  def look_at_place(game, transitions) do
     case transitions[game.current_place] do
       [_h | _] ->
         Enum.map(transitions[game.current_place], fn place ->
-          "You see #{place.article} #{place.name}. "
+          "You see #{place.article} #{place.name}."
         end)
+        |> Enum.join(" ")
 
       _ ->
         "You see nothing..."
+    end
+  end
+
+  def look_in_containers(containers) do
+    if containers != [] do
+      " You also see " <>
+        (Enum.map(containers, &(&1.article <> " " <> &1.name)) |> Enum.join(", "))
+    else
+      ""
+    end
+  end
+
+  def what_is_inside(user_input, containers) do
+    [_verb | container] = String.split(user_input, " ")
+
+    case Enum.filter(containers, &(String.contains?(&1.name, container))) do
+      [a | _] ->
+        s = Enum.map(a.items, & "#{&1.article} #{&1.name}") |> Enum.join(", ")
+        IO.puts "Inside the #{a.name} you see #{s}"
+
+      [] ->
+        IO.puts "There is nothing like that."
     end
   end
 
@@ -30,6 +57,7 @@ defmodule GameEngine do
 
   def goto_command(user_input, game, transitions, needed_items) do
     [_verb | place] = String.split(user_input, " ")
+
     destinations =
       Enum.filter(
         valid_moves(game, transitions, needed_items),
@@ -39,7 +67,12 @@ defmodule GameEngine do
     case destinations do
       [destination | _] ->
         if destination.name in game.visited do
-          %Game{current_place: destination,  bag: game.bag, score: game.score, visited: game.visited}
+          %Game{
+            current_place: destination,
+            bag: game.bag,
+            score: game.score,
+            visited: game.visited
+          }
         else
           %Game{
             current_place: destination,
@@ -55,17 +88,18 @@ defmodule GameEngine do
   end
 
   def use_command(user_input, game) do
-    [_verb | subject ] = String.split(user_input, " ")
+    [_verb | subject] = String.split(user_input, " ")
 
     # TODO check if player has the object
-    [object|_] = Enum.filter(game.bag, &(String.starts_with?(&1.name, subject)))
+    [object | _] = Enum.filter(game.bag, &String.starts_with?(&1.name, subject))
+
     case object.name do
-      "ball" -> IO.puts "You play with the ball"
-      _-> IO.puts "I don't know what do you want to use."
+      "ball" -> IO.puts("You play with the ball")
+      _ -> IO.puts("I don't know what do you want to use.")
     end
+
     game
   end
-
 
   def is_game_over?(game, end_game) do
     # and game.score > 1000)
@@ -100,6 +134,7 @@ defmodule GameEngine do
       String.starts_with?(user_input, "goto") -> :goto
       String.starts_with?(user_input, "open") -> :open
       String.starts_with?(user_input, "use") -> :use
+      String.starts_with?(user_input, "look") -> :look
       true -> :unknown
     end
   end
@@ -127,20 +162,32 @@ defmodule GameEngine do
               end_game,
               needed_items
             )
-            :use ->
-              main_loop(
-                use_command(user_command, game),
-                transitions,
-                end_game,
-                needed_items
-              )
+
+          :use ->
+            main_loop(
+              use_command(user_command, game),
+              transitions,
+              end_game,
+              needed_items
+            )
+
+          :look ->
+            what_is_inside(user_command, game.current_place.containers)
+
+            main_loop(
+              game,
+              transitions,
+              end_game,
+              needed_items
+            )
+
           _ ->
             main_loop(
-            game,
-            transitions,
-            end_game,
-            needed_items
-          )
+              game,
+              transitions,
+              end_game,
+              needed_items
+            )
         end
       end
     end

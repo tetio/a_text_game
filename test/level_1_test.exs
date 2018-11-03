@@ -18,11 +18,19 @@ defmodule Level1Test do
     ball = %GameItem{name: "ball"}
     comb = %GameItem{name: "comb"}
     soap = %GameItem{name: "soap"}
+    cup = %GameItem{name: "cup"}
+    hut_key = %GameItem{name: "hut key"}
+    salt = %GameItem{name: "salt", article: "some"}
+    cap = %GameItem{name: "cap"}
+    hammer = %GameItem{name: "hammer"}
+    nails = %GameItem{name: "nails", article: "some"}
+
+    cupboard = %Container{name: "copboard", items: [cup, salt, hut_key]}
 
     hall = %Place{name: "hall", money: 0}
     street = %Place{name: "street", money: 0}
     closet = %Place{name: "closet", items: [ball], money: 100, preposition: "in"}
-    kitchen = %Place{name: "kitchen", money: 10}
+    kitchen = %Place{name: "kitchen", money: 10, containers: [cupboard]}
     drug_store = %Place{name: "drug store", items: [soap, comb], money: 0}
     bus_station = %Place{name: "bus station", money: 0}
     end_game = closet
@@ -58,6 +66,8 @@ defmodule Level1Test do
     assert is_game_over?(game, end_game) == false
     game = goto_command("goto c", game, transitions, needed_items)
     game = goto_command("goto h", game, transitions, needed_items)
+    l = what_do_you_see(game, transitions)
+    assert String.contains?(l, "You see a closet.")
     game = goto_command("goto k", game, transitions, needed_items)
     game = goto_command("goto wwww", game, transitions, needed_items)
     game = goto_command("goto h", game, transitions, needed_items)
@@ -65,7 +75,7 @@ defmodule Level1Test do
 
     assert "street" in Enum.map(possible_moves, &(&1.name))
     assert "drug store" not in Enum.map(possible_moves, &(&1.name))
-    assert "You see a closet. "  in Enum.map(visible_places, &(&1))
+    assert String.contains?(visible_places, "You see a closet.")
     assert goto_command("goto street", game, transitions, needed_items).current_place == street
     game = goto_command("goto st", game, transitions, needed_items)
     assert goto_command("goto drug", game, transitions, needed_items).current_place == drug_store
