@@ -7,14 +7,15 @@ defmodule SomeData.MixProject do
       version: "0.1.0",
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      default_task: "run"
     ]
   end
 
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: {ATextGame, []},
+      #mod: {ATextGame, []},
       extra_applications: [:logger]
     ]
   end

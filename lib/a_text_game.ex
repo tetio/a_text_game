@@ -3,7 +3,7 @@ defmodule ATextGame do
   import Transition
   import GameEngine
 
-  def start(_type, _args) do
+  def start() do
     ball = %GameItem{name: "ball"}
     comb = %GameItem{name: "comb"}
     soap = %GameItem{name: "soap"}
@@ -14,6 +14,10 @@ defmodule ATextGame do
     kitchen = %Place{name: "kitchen", money: 10}
     drug_store = %Place{name: "drug store", items: [soap, comb], money: 0}
     bus_station = %Place{name: "bus station", money: 0}
+
+    bus_to_downtown = %Place{name: "bus to downtown", money: -5}
+    downtown = %Place{name: "downtown", money: 0}
+    bus_to_home = %Place{name: "bus to home", money: -5}
 
     needed_items = %{
       drug_store => [ball]
@@ -35,10 +39,17 @@ defmodule ATextGame do
         hall,
         drug_store,
         bus_station
+      ],
+      bus_station => [
+        street,
+        bus_to_downtown
+      ],
+      bus_to_downtown => [
+        bus_station,
+        downtown
       ]
     }
 
-    game = %Game{current_place: hall, score: 0}
     end_game = bus_station
     main_loop(%Game{current_place: hall}, transitions, end_game, needed_items)
   end
