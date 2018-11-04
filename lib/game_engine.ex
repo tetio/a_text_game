@@ -25,16 +25,31 @@ defmodule GameEngine do
     end
   end
 
-  def what_is_inside(user_input, containers) do
-    [_verb | container] = String.split(user_input, " ")
+  def mark_as_seen(game, containerName, items) do
+    updatedItems =
+      Enum.map(items, fn item ->
+        struct(item, seen: true)
+      end)
 
-    case Enum.filter(containers, &(String.contains?(&1.name, container))) do
+    otherContainers = Enum.filter(game.current_place.containers, &(&1.name != containerName))
+    containers = otherContainers ++ %Container{name: containerName, items: updatedItems}
+    cp = struct(game.current_place, container: containers)
+    struct(game, current_place: cp)
+  end
+
+  def what_is_inside(user_input, game) do
+    [_verb | containerNameArray] = String.split(user_input, " ")
+    [container | _] = containerNameArray
+
+    case Enum.filter(game.current_place.containers, &String.contains?(&1.name, container)) do
       [a | _] ->
-        s = Enum.map(a.items, & "#{&1.article} #{&1.name}") |> Enum.join(", ")
-        IO.puts "Inside the #{a.name} you see #{s}"
+        s = Enum.map(a.items, &"#{&1.article} #{&1.name}") |> Enum.join(", ")
+        IO.puts(IO.ANSI.red() <> "Inside the #{a.name} you see #{s}." <> IO.ANSI.default_color())
+        mark_as_seen(game, container, a.items)
 
       [] ->
-        IO.puts "There is nothing like that."
+        IO.puts("There is nothing like that.")
+        game
     end
   end
 
@@ -101,8 +116,16 @@ defmodule GameEngine do
     game
   end
 
+  def look_command(user_input, game) do
+    what_is_inside(user_input, game)
+  end
+
+  def pickup_command(user_input, game) do
+    game
+  end
+
   def is_game_over?(game, end_game) do
-    # and game.score > 1000)
+    # and game.score > 1000)xx
     game.current_place == end_game
   end
 
@@ -135,6 +158,7 @@ defmodule GameEngine do
       String.starts_with?(user_input, "open") -> :open
       String.starts_with?(user_input, "use") -> :use
       String.starts_with?(user_input, "look") -> :look
+      String.starts_with?(user_input, "pickup") -> :pickup
       true -> :unknown
     end
   end
@@ -147,7 +171,8 @@ defmodule GameEngine do
       IO.puts("***         Well done!            ***")
       IO.puts("*************************************")
     else
-      user_command = IO.gets("game:>") |> String.trim()
+      prompt = IO.ANSI.green() <> "game:>" <> IO.ANSI.default_color()
+      user_command = IO.gets(prompt) |> String.trim()
 
       if user_wants_to_quit?(user_command) do
         IO.puts("*************************************")
@@ -172,10 +197,8 @@ defmodule GameEngine do
             )
 
           :look ->
-            what_is_inside(user_command, game.current_place.containers)
-
             main_loop(
-              game,
+              look_command(user_command, game),
               transitions,
               end_game,
               needed_items
