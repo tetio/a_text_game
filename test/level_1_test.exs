@@ -26,6 +26,14 @@ defmodule Level1Test do
     hammer = %GameItem{name: "hammer"}
     nails = %GameItem{name: "nails", article: "some"}
 
+    game_items = %{
+      "cap" => cap,
+      "hut_key" => hut_key,
+      "salt" => salt,
+      "cup" => cup,
+      "hammer" => hammer,
+      "nails" => nails
+    }
     cupboard = %Container{name: "copboard", items: [cup, salt, hut_key]}
     closet = %Container{name: "closet", items: [cap]}
 
@@ -60,7 +68,7 @@ defmodule Level1Test do
       ]
     }
 
-    game = %Game{current_place: hall, score: 0}
+    game = %Game{current_place: hall, score: 0, items: game_items}
 
     possible_moves = valid_moves(game, transitions, needed_items)
     game = goto_command("goto st", game, transitions, needed_items)
@@ -87,7 +95,7 @@ defmodule Level1Test do
     assert goto_command("goto street", game, transitions, needed_items).current_place == street
     game = goto_command("goto st", game, transitions, needed_items)
     assert goto_command("goto drug", game, transitions, needed_items).current_place == street
-    game = %Game{current_place: street, bag: [ball]}
+    game = %Game{current_place: street, bag: [ball], items: game_items}
     assert goto_command("goto drug", game, transitions, needed_items).current_place == drug_store
 
     use_command("use ball", game)

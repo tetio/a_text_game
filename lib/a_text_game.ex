@@ -4,15 +4,12 @@ defmodule ATextGame do
   import GameEngine
 
   def start() do
-
-
     cup = %GameItem{name: "cup"}
     hut_key = %GameItem{name: "hut key"}
     salt = %GameItem{name: "salt", article: "some"}
     cap = %GameItem{name: "cap"}
     hammer = %GameItem{name: "hammer"}
     nails = %GameItem{name: "nails", article: "some"}
-
 
     cupboard = %Container{name: "cupboard", items: [cup, salt, hut_key]}
     closet = %Container{name: "closet", items: [cap]}
@@ -57,10 +54,19 @@ defmodule ATextGame do
         downtown,
         bus_to_home
       ]
-
     }
 
     end_game = bus_station
-    main_loop(%Game{current_place: hall}, transitions, end_game, needed_items)
+
+    game_items = %{
+      "cap" => cap,
+      "hut_key" => hut_key,
+      "salt" => salt,
+      "cup" => cup,
+      "hammer" => hammer,
+      "nails" => nails
+    }
+
+    main_loop(%Game{current_place: hall, items: game_items}, transitions, end_game, needed_items)
   end
 end

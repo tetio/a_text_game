@@ -25,27 +25,28 @@ defmodule GameEngine do
     end
   end
 
-  def mark_as_seen(game, containerName, items) do
-    updatedItems =
-      Enum.map(items, fn item ->
-        struct(item, seen: true)
-      end)
+  def mark_as_seen(game, items) do
+    updated_items =  Enum.map(items, fn item -> {item.name, struct(item, seen: true)} end) |>  Map.new
+    updated_game_items = Map.merge(game.items, updated_items)
+    struct(game, items: updated_game_items)
+  end
 
-    otherContainers = Enum.filter(game.current_place.containers, &(&1.name != containerName))
-    containers = otherContainers ++ %Container{name: containerName, items: updatedItems}
-    cp = struct(game.current_place, container: containers)
-    struct(game, current_place: cp)
+  def get_subject(user_input) do
+    [_verb | subjects] = String.split(user_input, " ")
+    [subject | _] = subjects
+    subject
   end
 
   def what_is_inside(user_input, game) do
-    [_verb | containerNameArray] = String.split(user_input, " ")
-    [container | _] = containerNameArray
+    container = get_subject(user_input)
 
     case Enum.filter(game.current_place.containers, &String.contains?(&1.name, container)) do
       [a | _] ->
         s = Enum.map(a.items, &"#{&1.article} #{&1.name}") |> Enum.join(", ")
         IO.puts(IO.ANSI.red() <> "Inside the #{a.name} you see #{s}." <> IO.ANSI.default_color())
-        mark_as_seen(game, container, a.items)
+
+        mark_as_seen(game, a.items)
+      # & {&1.name => &1}))
 
       [] ->
         IO.puts("There is nothing like that.")
@@ -86,14 +87,16 @@ defmodule GameEngine do
             current_place: destination,
             bag: game.bag,
             score: game.score,
-            visited: game.visited
+            visited: game.visited,
+            items: game.items
           }
         else
           %Game{
             current_place: destination,
             bag: destination.items ++ game.bag,
             score: game.score + destination.money,
-            visited: [destination.name | game.visited]
+            visited: [destination.name | game.visited],
+            items: game.items
           }
         end
 
@@ -121,6 +124,13 @@ defmodule GameEngine do
   end
 
   def pickup_command(user_input, game) do
+    object = get_subject(user_input)
+
+    # TODO
+    # 1- Check if object is in any container in the current_room
+    # 2- Check if object is already seen
+    # 3- remoive object from container and put it in the bag
+
     game
   end
 
@@ -199,6 +209,14 @@ defmodule GameEngine do
           :look ->
             main_loop(
               look_command(user_command, game),
+              transitions,
+              end_game,
+              needed_items
+            )
+
+          :pickup ->
+            main_loop(
+              pickup_command(user_command, game),
               transitions,
               end_game,
               needed_items
