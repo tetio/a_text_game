@@ -60,7 +60,7 @@ defmodule ATextGame do
 
     game_items = %{
       "cap" => cap,
-      "hut_key" => hut_key,
+      "hut key" => hut_key,
       "salt" => salt,
       "cup" => cup,
       "hammer" => hammer,

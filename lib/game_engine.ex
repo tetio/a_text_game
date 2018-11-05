@@ -26,7 +26,9 @@ defmodule GameEngine do
   end
 
   def mark_as_seen(game, items) do
-    updated_items =  Enum.map(items, fn item -> {item.name, struct(item, seen: true)} end) |>  Map.new
+    updated_items =
+      Enum.map(items, fn item -> {item.name, struct(item, seen: true)} end) |> Map.new()
+
     updated_game_items = Map.merge(game.items, updated_items)
     struct(game, items: updated_game_items)
   end
@@ -46,6 +48,7 @@ defmodule GameEngine do
         IO.puts(IO.ANSI.red() <> "Inside the #{a.name} you see #{s}." <> IO.ANSI.default_color())
 
         mark_as_seen(game, a.items)
+
       # & {&1.name => &1}))
 
       [] ->
@@ -169,8 +172,19 @@ defmodule GameEngine do
       String.starts_with?(user_input, "use") -> :use
       String.starts_with?(user_input, "look") -> :look
       String.starts_with?(user_input, "pickup") -> :pickup
+      String.starts_with?(user_input, "debug") -> :debug
       true -> :unknown
     end
+  end
+
+  def debug(game) do
+    s =
+      Enum.map(game.items, fn {k, v} ->
+        "key: #{k} name: #{v.name}, seen: #{v.seen}, value: #{v.value}, article: #{v.article}"
+      end)
+      |> Enum.join("\n")
+
+    IO.puts(IO.ANSI.yellow() <> s <> IO.ANSI.default_color())
   end
 
   def main_loop(game, transitions, end_game, needed_items) do
@@ -217,6 +231,16 @@ defmodule GameEngine do
           :pickup ->
             main_loop(
               pickup_command(user_command, game),
+              transitions,
+              end_game,
+              needed_items
+            )
+
+          :debug ->
+            debug(game)
+
+            main_loop(
+              game,
               transitions,
               end_game,
               needed_items
