@@ -39,6 +39,11 @@ defmodule ATextGame do
       "downtown" => downtown
     }
 
+    containers = %{
+      "cupboard" => cupboard,
+      "closet" => closet
+    }
+
     transitions = %{
       "hall" => [
         "street",
@@ -70,7 +75,7 @@ defmodule ATextGame do
 
     items = %{
       "cap" => cap,
-      "hut key" => hut_key,
+      "hut_key" => hut_key,
       "salt" => salt,
       "cup" => cup,
       "hammer" => hammer,
@@ -80,6 +85,6 @@ defmodule ATextGame do
 
 
 
-    main_loop(%Game{current_place: "hall", places: places, items: items}, transitions, end_game, needed_items)
+    main_loop(%Game{current_place: "hall", places: places, items: items, containers: containers}, transitions, end_game, needed_items)
   end
 end

@@ -1,7 +1,11 @@
 defmodule GameEngine do
   def what_do_you_see(game, transitions) do
-    place = game.places[String.to_atom(prepare_name(game.current_place))]
-    look_at_place(game, transitions) <> look_in_containers(place.containers)
+    place = game.places[game.current_place]
+
+    look_at_place(game, transitions) <>
+      look_in_containers(
+        Enum.map(place.containers, & game.containers[&1])
+      )
   end
 
   def prepare_name(name) do
@@ -9,10 +13,10 @@ defmodule GameEngine do
   end
 
   def look_at_place(game, transitions) do
-    case transitions[String.to_atom(prepare_name(game.current_place))] do
+    case transitions[game.current_place] do
       [_h | _] ->
-        Enum.map(transitions[String.to_atom(prepare_name(game.current_place))], fn place_name ->
-          place = game.places[String.to_atom(prepare_name(place_name))]
+        Enum.map(transitions[game.current_place], fn place_name ->
+          place = game.places[place_name]
           "You see #{place.article} #{place.name}."
         end)
         |> Enum.join(" ")
@@ -33,8 +37,9 @@ defmodule GameEngine do
 
   def mark_as_seen(game, items) do
     updated_items =
-      Enum.map(items, fn item -> {item.name, struct(item, seen: true)} end) |> Map.new()
+      Enum.map(items, fn item -> {item.name, struct(item, state: "seen")} end) |> Map.new()
 
+    _a = game.items["cup"]
     updated_game_items = Map.merge(game.items, updated_items)
     struct(game, items: updated_game_items)
   end
@@ -45,15 +50,20 @@ defmodule GameEngine do
     subject
   end
 
+  @spec what_is_inside(
+          binary(),
+          atom() | %{current_place: any(), places: nil | [{any(), any()}] | map()}
+        ) :: atom() | map()
   def what_is_inside(user_input, game) do
     container_name = get_subject(user_input)
-    place = game.places[String.to_atom(prepare_name(game.current_place))]
-    case Enum.filter(place.containers, &String.contains?(&1.name, container_name)) do
-      [a | _] ->
-        s = Enum.map(a.items, &"#{&1.article} #{&1.name}") |> Enum.join(", ")
-        IO.puts(IO.ANSI.red() <> "Inside the #{a.name} you see #{s}." <> IO.ANSI.default_color())
+    place = game.places[game.current_place]
 
-        mark_as_seen(game, a.items)
+    case Enum.filter(place.containers, &String.contains?(&1, container_name)) do
+      [a | _] ->
+        s = Enum.map(game.containers[a].items, &"#{&1.article} #{&1.name}") |> Enum.join(", ")
+        IO.puts(IO.ANSI.red() <> "Inside the #{game.containers[a].name} you see #{s}." <> IO.ANSI.default_color())
+
+        mark_as_seen(game, game.containers[a].items)
 
       # & {&1.name => &1}))
 
@@ -64,7 +74,7 @@ defmodule GameEngine do
   end
 
   def where_you_are(game) do
-    "You are in #{game.current_place.article} #{game.current_place.name}. "
+    "You are in #{game.places[game.current_place].article} #{game.places[game.current_place].name}. "
   end
 
   def has_all_needed_items(items, bag) do
@@ -72,9 +82,9 @@ defmodule GameEngine do
   end
 
   def valid_moves(game, transitions, needed_items) do
-    Enum.filter(transitions[String.to_atom(prepare_name(game.current_place))], fn destination ->
-      if needed_items[String.to_atom(prepare_name(destination))] == nil or
-           has_all_needed_items(needed_items[String.to_atom(prepare_name(destination))], game.bag) do
+    Enum.filter(transitions[game.current_place], fn destination ->
+      if needed_items[destination] == nil or
+           has_all_needed_items(needed_items[destination], game.bag) do
         destination
       end
     end)
@@ -98,17 +108,20 @@ defmodule GameEngine do
             score: game.score,
             visited: game.visited,
             items: game.items,
-            places: game.places
+            places: game.places,
+            containers: game.containers
           }
         else
-          sss = game.places[String.to_atom(prepare_name(destination))]
+          sss = game.places[destination]
+
           %Game{
             current_place: destination,
             bag: game.bag,
-            score: game.score  + sss.money,
+            score: game.score + sss.money,
             visited: [destination | game.visited],
             items: game.items,
-            places: game.places
+            places: game.places,
+            containers: game.containers
           }
         end
 
@@ -189,7 +202,7 @@ defmodule GameEngine do
   def debug(game) do
     s =
       Enum.map(game.items, fn {k, v} ->
-        "key: #{k} name: #{v.name}, seen: #{v.seen}, value: #{v.value}, article: #{v.article}"
+        "key: #{k} name: #{v.name}, state: #{v.state}, value: #{v.value}, article: #{v.article}"
       end)
       |> Enum.join("\n")
 

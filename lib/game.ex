@@ -1,3 +1,3 @@
 defmodule Game do
-  defstruct current_place: nil, score: 0, visited: [], bag: [], items: [], places: []
+  defstruct current_place: nil, score: 0, visited: [], bag: [], items: [], places: [], containers: []
 end
