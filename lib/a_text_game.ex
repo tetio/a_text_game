@@ -1,23 +1,21 @@
 defmodule ATextGame do
-  import Place
-  import Transition
   import GameEngine
 
   def start() do
-    cup = %GameItem{name: "cup"}
-    hut_key = %GameItem{name: "hut key"}
-    salt = %GameItem{name: "salt", article: "some"}
-    cap = %GameItem{name: "cap"}
-    hammer = %GameItem{name: "hammer"}
-    nails = %GameItem{name: "nails", article: "some"}
+    cup = %Item{name: "cup"}
+    hut_key = %Item{name: "hut key"}
+    salt = %Item{name: "salt", article: "some"}
+    cap = %Item{name: "cap"}
+    hammer = %Item{name: "hammer"}
+    nails = %Item{name: "nails", article: "some"}
 
     cupboard = %Container{name: "cupboard", items: [cup, salt, hut_key]}
     closet = %Container{name: "closet", items: [cap]}
 
-    hall = %Place{name: "hall", money: 0, containers: [closet]}
+    hall = %Place{name: "hall", money: 0, containers: ["closet"]}
     street = %Place{name: "street", money: 0}
-    kitchen = %Place{name: "kitchen", money: 10, containers: [cupboard]}
-    hut = %Place{name: "hut", items: [hammer, nails], money: 0}
+    kitchen = %Place{name: "kitchen", money: 10, containers: ["cupboard"]}
+    hut = %Place{name: "hut", items: ["hammer", "nails"], money: 0}
     bus_station = %Place{name: "bus station", money: 0}
     downtown_bus_station = %Place{name: "downtown bus station", money: 0}
 
@@ -26,39 +24,51 @@ defmodule ATextGame do
     downtown = %Place{name: "downtown", money: 0}
 
     needed_items = %{
-      hut => [hut_key]
+      "hut" => ["hut_key"]
+    }
+
+    places = %{
+      "hall" => hall,
+      "street" => street,
+      "kitchen" => kitchen,
+      "hut" => hut,
+      "bus_station" => bus_station,
+      "bus_to_downtown" => bus_to_downtown,
+      "downtown_bus_station" => downtown_bus_station,
+      "bus_to_home" => bus_to_home,
+      "downtown" => downtown
     }
 
     transitions = %{
-      hall => [
-        street,
-        kitchen
+      "hall" => [
+        "street",
+        "kitchen"
       ],
-      kitchen => [
-        hall
+      "kitchen" => [
+        "hall"
       ],
-      street => [
-        hall,
-        hut,
-        bus_station
+      "street" => [
+        "hall",
+        "hut",
+        "bus_station"
       ],
-      bus_station => [
-        street,
-        bus_to_downtown
+      "bus_station" => [
+        "street",
+        "bus_to_downtown"
       ],
-      bus_to_downtown => [
-        downtown_bus_station,
-        bus_station
+      "bus_to_downtown" => [
+        "downtown_bus_station",
+        "bus_station"
       ],
-      downtown_bus_station => [
-        downtown,
-        bus_to_home
+      "downtown_bus_station" => [
+        "downtown",
+        "bus_to_home"
       ]
     }
 
-    end_game = bus_station
+    end_game = "bus_station"
 
-    game_items = %{
+    items = %{
       "cap" => cap,
       "hut key" => hut_key,
       "salt" => salt,
@@ -67,6 +77,9 @@ defmodule ATextGame do
       "nails" => nails
     }
 
-    main_loop(%Game{current_place: hall, items: game_items}, transitions, end_game, needed_items)
+
+
+
+    main_loop(%Game{current_place: "hall", places: places, items: items}, transitions, end_game, needed_items)
   end
 end

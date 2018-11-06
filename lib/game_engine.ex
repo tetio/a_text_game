@@ -1,12 +1,18 @@
 defmodule GameEngine do
   def what_do_you_see(game, transitions) do
-    look_at_place(game, transitions) <> look_in_containers(game.current_place.containers)
+    place = game.places[String.to_atom(prepare_name(game.current_place))]
+    look_at_place(game, transitions) <> look_in_containers(place.containers)
+  end
+
+  def prepare_name(name) do
+    String.replace(name, " ", "_")
   end
 
   def look_at_place(game, transitions) do
-    case transitions[game.current_place] do
+    case transitions[String.to_atom(prepare_name(game.current_place))] do
       [_h | _] ->
-        Enum.map(transitions[game.current_place], fn place ->
+        Enum.map(transitions[String.to_atom(prepare_name(game.current_place))], fn place_name ->
+          place = game.places[String.to_atom(prepare_name(place_name))]
           "You see #{place.article} #{place.name}."
         end)
         |> Enum.join(" ")
@@ -40,9 +46,9 @@ defmodule GameEngine do
   end
 
   def what_is_inside(user_input, game) do
-    container = get_subject(user_input)
-
-    case Enum.filter(game.current_place.containers, &String.contains?(&1.name, container)) do
+    container_name = get_subject(user_input)
+    place = game.places[String.to_atom(prepare_name(game.current_place))]
+    case Enum.filter(place.containers, &String.contains?(&1.name, container_name)) do
       [a | _] ->
         s = Enum.map(a.items, &"#{&1.article} #{&1.name}") |> Enum.join(", ")
         IO.puts(IO.ANSI.red() <> "Inside the #{a.name} you see #{s}." <> IO.ANSI.default_color())
@@ -66,9 +72,9 @@ defmodule GameEngine do
   end
 
   def valid_moves(game, transitions, needed_items) do
-    Enum.filter(transitions[game.current_place], fn destination ->
-      if needed_items[destination] == nil or
-           has_all_needed_items(needed_items[destination], game.bag) do
+    Enum.filter(transitions[String.to_atom(prepare_name(game.current_place))], fn destination ->
+      if needed_items[String.to_atom(prepare_name(destination))] == nil or
+           has_all_needed_items(needed_items[String.to_atom(prepare_name(destination))], game.bag) do
         destination
       end
     end)
@@ -80,26 +86,29 @@ defmodule GameEngine do
     destinations =
       Enum.filter(
         valid_moves(game, transitions, needed_items),
-        &String.starts_with?(&1.name, place)
+        &String.starts_with?(&1, place)
       )
 
     case destinations do
       [destination | _] ->
-        if destination.name in game.visited do
+        if destination in game.visited do
           %Game{
             current_place: destination,
             bag: game.bag,
             score: game.score,
             visited: game.visited,
-            items: game.items
+            items: game.items,
+            places: game.places
           }
         else
+          sss = game.places[String.to_atom(prepare_name(destination))]
           %Game{
             current_place: destination,
-            bag: destination.items ++ game.bag,
-            score: game.score + destination.money,
-            visited: [destination.name | game.visited],
-            items: game.items
+            bag: game.bag,
+            score: game.score  + sss.money,
+            visited: [destination | game.visited],
+            items: game.items,
+            places: game.places
           }
         end
 
@@ -112,9 +121,9 @@ defmodule GameEngine do
     [_verb | subject] = String.split(user_input, " ")
 
     # TODO check if player has the object
-    [object | _] = Enum.filter(game.bag, &String.starts_with?(&1.name, subject))
+    [object | _] = Enum.filter(game.bag, &String.starts_with?(&1, subject))
 
-    case object.name do
+    case object do
       "ball" -> IO.puts("You play with the ball")
       _ -> IO.puts("I don't know what do you want to use.")
     end
