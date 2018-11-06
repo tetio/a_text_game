@@ -40,9 +40,9 @@ defmodule Level1Test do
     cupboard = %Container{name: "copboard", items: [cup, salt, hut_key]}
     closet = %Container{name: "closet", items: [cap]}
 
-    hall = %Place{name: "hall", money: 0, containers: [closet]}
+    hall = %Place{name: "hall", money: 0, containers: ["closet"]}
     street = %Place{name: "street", money: 0}
-    kitchen = %Place{name: "kitchen", money: 10, containers: [cupboard]}
+    kitchen = %Place{name: "kitchen", money: 10, containers: ["cupboard"]}
     drug_store = %Place{name: "drug store", items: [soap, comb], money: 0}
     bus_station = %Place{name: "bus station", money: 0}
 
@@ -83,7 +83,7 @@ defmodule Level1Test do
       ]
     }
 
-    game = %Game{current_place: "hall", score: 0, items: items, places: places}
+    game = %Game{current_place: "hall", score: 0, items: items, places: places, containers: containers}
 
     possible_moves = valid_moves(game, transitions, needed_items)
     assert "street" in Enum.map(possible_moves, & &1)

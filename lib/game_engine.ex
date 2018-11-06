@@ -3,14 +3,9 @@ defmodule GameEngine do
     place = game.places[game.current_place]
 
     look_at_place(game, transitions) <>
-      look_in_containers(
-        Enum.map(place.containers, & game.containers[&1])
-      )
+      look_in_containers(Enum.map(place.containers, &game.containers[&1]))
   end
 
-  def prepare_name(name) do
-    String.replace(name, " ", "_")
-  end
 
   def look_at_place(game, transitions) do
     case transitions[game.current_place] do
@@ -61,7 +56,11 @@ defmodule GameEngine do
     case Enum.filter(place.containers, &String.contains?(&1, container_name)) do
       [a | _] ->
         s = Enum.map(game.containers[a].items, &"#{&1.article} #{&1.name}") |> Enum.join(", ")
-        IO.puts(IO.ANSI.red() <> "Inside the #{game.containers[a].name} you see #{s}." <> IO.ANSI.default_color())
+
+        IO.puts(
+          IO.ANSI.red() <>
+            "Inside the #{game.containers[a].name} you see #{s}." <> IO.ANSI.default_color()
+        )
 
         mark_as_seen(game, game.containers[a].items)
 
