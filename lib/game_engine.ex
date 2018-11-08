@@ -1,12 +1,10 @@
 defmodule GameEngine do
-
   def is_in_bag?(game_items, item) do
-    (game_items[item].state == "bag")
+    game_items[item].state == "bag"
   end
 
-
   def items_in_bag(game_items) do
-    Enum.filter(game_items, & &1.state == "bag")
+    Enum.filter(game_items, fn {_k, v} -> v.state == "bag" end)
   end
 
   def what_do_you_see(game, transitions) do
@@ -41,7 +39,7 @@ defmodule GameEngine do
 
   def mark_as_seen(game, items) do
     updated_items =
-      Enum.map(items, fn item -> {item.name, struct(item, state: "seen")} end) |> Map.new()
+      Enum.map(items, fn item -> {item, struct(game.items[item], state: "seen")} end) |> Map.new()
 
     updated_game_items = Map.merge(game.items, updated_items)
     struct(game, items: updated_game_items)
@@ -59,10 +57,13 @@ defmodule GameEngine do
 
     case Enum.filter(here.containers, &String.contains?(&1, container_name)) do
       [a | _] ->
-        s = Enum.map(game.containers[a].items, &"#{&1.article} #{&1.name}") |> Enum.join(", ")
+        s =
+          Enum.filter(game.containers[a].items, &(game.items[&1].state != "bag"))
+          |> Enum.map(&"#{game.items[&1].article} #{game.items[&1].name}")
+          |> Enum.join(", ")
 
         IO.puts(
-          IO.ANSI.red() <>
+          IO.ANSI.cyan() <>
             "Inside the #{game.containers[a].name} you see #{s}." <> IO.ANSI.default_color()
         )
 
@@ -79,7 +80,7 @@ defmodule GameEngine do
   end
 
   def has_all_needed_items(items, game_items) do
-    Enum.all?(items, &(is_in_bag?(game_items, &1)))
+    Enum.all?(items, &is_in_bag?(game_items, &1))
   end
 
   def valid_moves(game, transitions, needed_items) do
@@ -135,14 +136,26 @@ defmodule GameEngine do
   end
 
   def pickup_command(user_input, game) do
-    _object = get_subject(user_input)
+    item_to_pickup = get_subject(user_input)
 
     # TODO
     # 1- Check if object is in any container in the current_room
-    # 2- Check if object is already seen
-    # 3- remoive object from container and put it in the bag
+    containers = game.places[game.current_place].containers
 
-    game
+    items =
+      Enum.flat_map(containers, &game.containers[&1].items)
+      |> Enum.filter(&(&1 == item_to_pickup and game.items[&1].state == "seen"))
+
+    case items do
+      [i | _] ->
+        item_updated = struct(game.items[i], state: "bag")
+        struct(game, items: Map.merge(game.items, %{i => item_updated}))
+
+      _ ->
+        IO.puts(IO.ANSI.red() <> "Item not found" <> IO.ANSI.default_color())
+        game
+    end
+
   end
 
   def is_game_over?(game, end_game) do
@@ -156,19 +169,18 @@ defmodule GameEngine do
 
   def you_have(game) do
     s = "Your score is #{game.score}"
-
-    case game.items do
+    my_items = items_in_bag(game.items)
+    case my_items do
       [_h | _] ->
         s <>
           " and you have " <>
-          Enum.join(Enum.map(items_in_bag(game.items), &(&1.article <> " " <> &1.name)), ", ") <> "."
+          Enum.join(Enum.map(my_items, fn {_k, v} -> v.article <> " " <> v.name end), ", ") <>
+          "."
 
       [] ->
         s
     end
   end
-
-
 
   def display_game_data(game, transitions) do
     IO.puts(where_you_are(game) <> you_have(game))

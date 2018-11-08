@@ -9,8 +9,8 @@ defmodule ATextGame do
     hammer = %Item{name: "hammer"}
     nails = %Item{name: "nails", article: "some"}
 
-    cupboard = %Container{name: "cupboard", items: [cup, salt, hut_key]}
-    closet = %Container{name: "closet", items: [cap]}
+    cupboard = %Container{name: "cupboard", items: ["cup", "salt", "hut_key"]}
+    closet = %Container{name: "closet", items: ["cap"]}
 
     hall = %Place{name: "hall", money: 0, containers: ["closet"]}
     street = %Place{name: "street", money: 0}

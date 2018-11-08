@@ -36,10 +36,8 @@ defmodule Level1Test do
       "nails" => nails
     }
 
-
-
-    cupboard = %Container{name: "copboard", items: [cup, salt, hut_key]}
-    closet = %Container{name: "closet", items: [cap]}
+    cupboard = %Container{name: "copboard", items: ["cup", "salt", "hut_key"]}
+    closet = %Container{name: "closet", items: ["cap"]}
 
     hall = %Place{name: "hall", money: 0, containers: ["closet"]}
     street = %Place{name: "street", money: 0}
@@ -61,7 +59,7 @@ defmodule Level1Test do
     places = %{
       "hall" => hall,
       "street" => street,
-      "kitchen"=> kitchen,
+      "kitchen" => kitchen,
       "drug_store" => drug_store,
       "us_station" => bus_station
     }
@@ -74,17 +72,27 @@ defmodule Level1Test do
       "closet" => [
         "hall"
       ],
-      "kitchen" =>[
+      "kitchen" => [
         "hall"
       ],
       "street" => [
         "hall",
         "drug_store",
         "bus_station"
+      ],
+      "drug_store" => [
+        "hall",
+        "street"
       ]
     }
 
-    game = %Game{current_place: "hall", score: 0, items: items, places: places, containers: containers}
+    game = %Game{
+      current_place: "hall",
+      score: 0,
+      items: items,
+      places: places,
+      containers: containers
+    }
 
     possible_moves = valid_moves(game, transitions, needed_items)
     assert "street" in Enum.map(possible_moves, & &1)
@@ -109,15 +117,29 @@ defmodule Level1Test do
     visible_places = what_do_you_see(game, transitions)
 
     assert String.contains?(visible_places, "You also see a closet")
+
     assert goto_command("goto street", game, transitions, needed_items).current_place == "street"
     aGame = goto_command("goto st", game, transitions, needed_items)
     assert goto_command("goto drug", aGame, transitions, needed_items).current_place == "street"
     item = struct(items["ball"], state: "bag")
     items = Map.merge(items, %{"ball" => item})
-    last_game = %Game{current_place: "street", items: items, places: places}
-    g = goto_command("goto drug", last_game, transitions, needed_items)
-    assert g.current_place == "drug_store"
 
+    updated_game = %Game{
+      current_place: "street",
+      score: 0,
+      items: items,
+      places: places,
+      containers: containers
+    }
+
+    g = goto_command("goto drug", updated_game, transitions, needed_items)
+    assert g.current_place == "drug_store"
+    g = goto_command("goto hall", g, transitions, needed_items)
+    # pickup command
+    g = look_command("look closet", g)
+    gz = pickup_command("pickup cap", g)
+    in_bag = items_in_bag(gz.items)
+    assert Enum.filter(in_bag, fn {k, _v} -> k == "cap" end) != []
     # TODO use_command("use ball", game)
   end
 end
