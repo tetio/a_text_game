@@ -28,6 +28,7 @@ defmodule Level1Test do
 
     items = %{
       "cap" => cap,
+      "ball" => ball,
       "hut_key" => hut_key,
       "salt" => salt,
       "cup" => cup,
@@ -111,10 +112,12 @@ defmodule Level1Test do
     assert goto_command("goto street", game, transitions, needed_items).current_place == "street"
     aGame = goto_command("goto st", game, transitions, needed_items)
     assert goto_command("goto drug", aGame, transitions, needed_items).current_place == "street"
-    game = %Game{current_place: "street", bag: ["ball"], items: items, places: places}
-    g = goto_command("goto drug", game, transitions, needed_items)
+    item = struct(items["ball"], state: "bag")
+    items = Map.merge(items, %{"ball" => item})
+    last_game = %Game{current_place: "street", items: items, places: places}
+    g = goto_command("goto drug", last_game, transitions, needed_items)
     assert g.current_place == "drug_store"
 
-    use_command("use ball", game)
+    # TODO use_command("use ball", game)
   end
 end

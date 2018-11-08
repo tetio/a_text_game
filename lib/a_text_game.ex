@@ -44,6 +44,15 @@ defmodule ATextGame do
       "closet" => closet
     }
 
+    items = %{
+      "cap" => cap,
+      "hut_key" => hut_key,
+      "salt" => salt,
+      "cup" => cup,
+      "hammer" => hammer,
+      "nails" => nails
+    }
+
     transitions = %{
       "hall" => [
         "street",
@@ -73,14 +82,7 @@ defmodule ATextGame do
 
     end_game = "bus_station"
 
-    items = %{
-      "cap" => cap,
-      "hut_key" => hut_key,
-      "salt" => salt,
-      "cup" => cup,
-      "hammer" => hammer,
-      "nails" => nails
-    }
+
 
 
 
