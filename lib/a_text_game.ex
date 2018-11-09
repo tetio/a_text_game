@@ -3,6 +3,7 @@ defmodule ATextGame do
 
   def start() do
     cup = %Item{name: "cup"}
+    ball = %Item{name: "ball"}
     hut_key = %Item{name: "hut key"}
     salt = %Item{name: "salt", article: "some"}
     cap = %Item{name: "cap"}
@@ -10,7 +11,7 @@ defmodule ATextGame do
     nails = %Item{name: "nails", article: "some"}
 
     cupboard = %Container{name: "cupboard", items: ["cup", "salt", "hut_key"]}
-    closet = %Container{name: "closet", items: ["cap"]}
+    closet = %Container{name: "closet", items: ["cap", "ball"]}
 
     hall = %Place{name: "hall", money: 0, containers: ["closet"]}
     street = %Place{name: "street", money: 0}
@@ -46,6 +47,7 @@ defmodule ATextGame do
 
     items = %{
       "cap" => cap,
+      "ball" => ball,
       "hut_key" => hut_key,
       "salt" => salt,
       "cup" => cup,

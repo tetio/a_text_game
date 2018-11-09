@@ -70,7 +70,9 @@ defmodule GameEngine do
         mark_as_seen(game, game.containers[a].items)
 
       [] ->
+        # TODO check if user is lookin the place, then show a short description
         IO.puts("There is nothing like that.")
+
         game
     end
   end
@@ -121,10 +123,10 @@ defmodule GameEngine do
   def use_command(user_input, game) do
     subject = get_subject(user_input)
 
-    [object | _] = Enum.filter(items_in_bag(game.items), &String.starts_with?(&1, subject))
+    object = Enum.map(items_in_bag(game.items), fn {k, _v} -> k end) |> Enum.filter(&String.starts_with?(&1, subject))
 
     case object do
-      "ball" -> IO.puts("You play with the ball")
+      ["ball" | _] -> IO.puts("You play with the ball")
       _ -> IO.puts("I don't know what do you want to use.")
     end
 
@@ -213,17 +215,23 @@ defmodule GameEngine do
     display_game_data(game, transitions)
 
     if is_game_over?(game, end_game) do
-      IO.puts("*************************************")
-      IO.puts("***         Well done!            ***")
-      IO.puts("*************************************")
+      message = IO.ANSI.magenta() <> """
+      *************************************
+      ***         Well done!            ***
+      *************************************
+      """ <>  IO.ANSI.default_color()
+      IO.puts message
     else
       prompt = IO.ANSI.green() <> "game:>" <> IO.ANSI.default_color()
       user_command = IO.gets(prompt) |> String.trim()
 
       if user_wants_to_quit?(user_command) do
-        IO.puts("*************************************")
-        IO.puts("***          Good bye!            ***")
-        IO.puts("*************************************")
+        message = IO.ANSI.magenta() <> """
+        *************************************
+        ***          Good bye!            ***
+        *************************************
+        """ <>  IO.ANSI.default_color()
+        IO.puts message
       else
         case dispatch(user_command) do
           :goto ->
