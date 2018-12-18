@@ -39,7 +39,8 @@ defmodule GameEngine do
 
   def mark_as_seen(game, items) do
     updated_items =
-      Enum.map(items, fn item -> {item, struct(game.items[item], state: "seen")} end) |> Map.new()
+      Enum.filter(items, & (game.items[&1].state == "unseen"))
+      |> Enum.map(fn item -> {item, struct(game.items[item], state: "seen")} end) |> Map.new()
 
     updated_game_items = Map.merge(game.items, updated_items)
     struct(game, items: updated_game_items)
@@ -47,8 +48,12 @@ defmodule GameEngine do
 
   def get_subject(user_input) do
     [_verb | subjects] = String.split(user_input, " ")
-    [subject | _] = subjects
-    subject
+
+    if subjects == [] do
+      ''
+    else
+      Enum.join(subjects, " ")
+    end
   end
 
   def what_is_inside(user_input, game) do
@@ -72,7 +77,6 @@ defmodule GameEngine do
       [] ->
         # TODO check if user is lookin the place, then show a short description
         IO.puts("There is nothing like that.")
-
         game
     end
   end
@@ -81,14 +85,14 @@ defmodule GameEngine do
     "You are in #{game.places[game.current_place].article} #{game.places[game.current_place].name}. "
   end
 
-  def has_all_needed_items(items, game_items) do
+  def has_all_needed_items?(items, game_items) do
     Enum.all?(items, &is_in_bag?(game_items, &1))
   end
 
   def valid_moves(game, transitions, needed_items) do
     Enum.filter(transitions[game.current_place], fn destination ->
       if needed_items[destination] == nil or
-           has_all_needed_items(needed_items[destination], game.items) do
+           has_all_needed_items?(needed_items[destination], game.items) do
         destination
       end
     end)
@@ -123,7 +127,9 @@ defmodule GameEngine do
   def use_command(user_input, game) do
     subject = get_subject(user_input)
 
-    object = Enum.map(items_in_bag(game.items), fn {k, _v} -> k end) |> Enum.filter(&String.starts_with?(&1, subject))
+    object =
+      Enum.map(items_in_bag(game.items), fn {k, _v} -> k end)
+      |> Enum.filter(&String.starts_with?(&1, subject))
 
     case object do
       ["ball" | _] -> IO.puts("You play with the ball")
@@ -157,7 +163,6 @@ defmodule GameEngine do
         IO.puts(IO.ANSI.red() <> "Item not found" <> IO.ANSI.default_color())
         game
     end
-
   end
 
   def is_game_over?(game, end_game) do
@@ -172,12 +177,12 @@ defmodule GameEngine do
   def you_have(game) do
     s = "Your score is #{game.score}"
     my_items = items_in_bag(game.items)
+
     case my_items do
       [_h | _] ->
         s <>
           " and you have " <>
-          Enum.join(Enum.map(my_items, fn {_k, v} -> v.article <> " " <> v.name end), ", ") <>
-          "."
+          Enum.join(Enum.map(my_items, fn {_k, v} -> v.article <> " " <> v.name end), ", ") <> "."
 
       [] ->
         s
@@ -215,23 +220,29 @@ defmodule GameEngine do
     display_game_data(game, transitions)
 
     if is_game_over?(game, end_game) do
-      message = IO.ANSI.magenta() <> """
-      *************************************
-      ***         Well done!            ***
-      *************************************
-      """ <>  IO.ANSI.default_color()
-      IO.puts message
+      message =
+        IO.ANSI.magenta() <>
+          """
+          *************************************
+          ***         Well done!            ***
+          *************************************
+          """ <> IO.ANSI.default_color()
+
+      IO.puts(message)
     else
       prompt = IO.ANSI.green() <> "game:>" <> IO.ANSI.default_color()
       user_command = IO.gets(prompt) |> String.trim()
 
       if user_wants_to_quit?(user_command) do
-        message = IO.ANSI.magenta() <> """
-        *************************************
-        ***          Good bye!            ***
-        *************************************
-        """ <>  IO.ANSI.default_color()
-        IO.puts message
+        message =
+          IO.ANSI.magenta() <>
+            """
+            *************************************
+            ***          Good bye!            ***
+            *************************************
+            """ <> IO.ANSI.default_color()
+
+        IO.puts(message)
       else
         case dispatch(user_command) do
           :goto ->

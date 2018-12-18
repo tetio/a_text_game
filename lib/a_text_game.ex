@@ -10,7 +10,7 @@ defmodule ATextGame do
     hammer = %Item{name: "hammer"}
     nails = %Item{name: "nails", article: "some"}
 
-    cupboard = %Container{name: "cupboard", items: ["cup", "salt", "hut_key"]}
+    cupboard = %Container{name: "cupboard", items: ["cup", "salt", "hut key"]}
     closet = %Container{name: "closet", items: ["cap", "ball"]}
 
     hall = %Place{name: "hall", money: 0, containers: ["closet"]}
@@ -25,7 +25,7 @@ defmodule ATextGame do
     downtown = %Place{name: "downtown", money: 0}
 
     needed_items = %{
-      "hut" => ["hut_key"]
+      "hut" => ["hut key"]
     }
 
     places = %{
@@ -48,7 +48,7 @@ defmodule ATextGame do
     items = %{
       "cap" => cap,
       "ball" => ball,
-      "hut_key" => hut_key,
+      "hut key" => hut_key,
       "salt" => salt,
       "cup" => cup,
       "hammer" => hammer,
