@@ -39,11 +39,13 @@ defmodule GameEngine do
 
   def mark_as_seen(game, items) do
     updated_items =
-      Enum.filter(items, & (game.items[&1].state == "unseen"))
-      |> Enum.map(fn item -> {item, struct(game.items[item], state: "seen")} end) |> Map.new()
+      Enum.filter(items, &(game.items[&1].state == "unseen"))
+      |> Enum.map(fn item -> {item, struct(game.items[item], state: "seen")} end)
+      |> Map.new()
 
     updated_game_items = Map.merge(game.items, updated_items)
-    struct(game, items: updated_game_items)
+    # struct(game, items: updated_game_items)
+    %Game{game | items: updated_game_items}
   end
 
   def get_subject(user_input) do
@@ -54,10 +56,15 @@ defmodule GameEngine do
     else
       Enum.join(subjects, " ")
     end
+    # case subjects do
+    #   [s | _] -> s
+    #   _ -> ''
+    # end
   end
 
-  def what_is_inside(user_input, game) do
-    container_name = get_subject(user_input)
+  def what_is_inside(user_input, transitions, game) do
+    subject = get_subject(user_input)
+    container_name = subject
     here = game.places[game.current_place]
 
     case Enum.filter(here.containers, &String.contains?(&1, container_name)) do
@@ -67,16 +74,40 @@ defmodule GameEngine do
           |> Enum.map(&"#{game.items[&1].article} #{game.items[&1].name}")
           |> Enum.join(", ")
 
+        items =
+          case s do
+            "" -> "nothing"
+            _ -> s
+          end
+
         IO.puts(
           IO.ANSI.cyan() <>
-            "Inside the #{game.containers[a].name} you see #{s}." <> IO.ANSI.default_color()
+            "Inside the #{game.containers[a].name} you see #{items}." <> IO.ANSI.default_color()
         )
 
         mark_as_seen(game, game.containers[a].items)
 
       [] ->
-        # TODO check if user is lookin the place, then show a short description
-        IO.puts("There is nothing like that.")
+        # now we are
+        place = subject
+
+        destinations =
+          Enum.filter(
+            transitions[game.current_place] ++ [game.current_place],
+            &String.contains?(&1, place)
+          )
+
+        case destinations do
+          [d | _] ->
+            case String.contains?(d, game.current_place) do
+              false -> IO.puts("You can not see what is in there, you are a little far away.")
+              true -> IO.puts(look_at_place(game, transitions))
+            end
+
+          _ ->
+            IO.puts("There is nothing like that.")
+        end
+
         game
     end
   end
@@ -129,7 +160,7 @@ defmodule GameEngine do
 
     object =
       Enum.map(items_in_bag(game.items), fn {k, _v} -> k end)
-      |> Enum.filter(&String.starts_with?(&1, subject))
+        |> Enum.filter(&String.starts_with?(&1, subject))
 
     case object do
       ["ball" | _] -> IO.puts("You play with the ball")
@@ -139,8 +170,8 @@ defmodule GameEngine do
     game
   end
 
-  def look_command(user_input, game) do
-    what_is_inside(user_input, game)
+  def look_command(user_input, transitions, game) do
+    what_is_inside(user_input, transitions, game)
   end
 
   def pickup_command(user_input, game) do
@@ -221,7 +252,7 @@ defmodule GameEngine do
 
     if is_game_over?(game, end_game) do
       message =
-        IO.ANSI.magenta() <>
+        IO.ANSI.cyan() <>
           """
           *************************************
           ***         Well done!            ***
@@ -235,7 +266,7 @@ defmodule GameEngine do
 
       if user_wants_to_quit?(user_command) do
         message =
-          IO.ANSI.magenta() <>
+          IO.ANSI.cyan() <>
             """
             *************************************
             ***          Good bye!            ***
@@ -263,7 +294,7 @@ defmodule GameEngine do
 
           :look ->
             main_loop(
-              look_command(user_command, game),
+              look_command(user_command, transitions, game),
               transitions,
               end_game,
               needed_items

@@ -85,10 +85,10 @@ defmodule ATextGame do
     end_game = "bus_station"
 
 
-
-
-
-
     main_loop(%Game{current_place: "hall", places: places, items: items, containers: containers}, transitions, end_game, needed_items)
+  end
+
+  def start(_, _) do
+    start()
   end
 end
