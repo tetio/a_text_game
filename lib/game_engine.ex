@@ -29,11 +29,11 @@ defmodule GameEngine do
   end
 
   def look_in_containers(containers) do
-    if containers != [] do
-      " You also see " <>
-        (Enum.map(containers, &(&1.article <> " " <> &1.name)) |> Enum.join(", "))
-    else
-      ""
+    case containers do
+      [_h | _] ->
+        " You also see " <>
+          (Enum.map(containers, &(&1.article <> " " <> &1.name)) |> Enum.join(", "))
+      _ -> ""
     end
   end
 
@@ -50,12 +50,12 @@ defmodule GameEngine do
 
   def get_subject(user_input) do
     [_verb | subjects] = String.split(user_input, " ")
-
-    if subjects == [] do
-      ''
-    else
-      Enum.join(subjects, " ")
-    end
+    Enum.join(subjects, " ")
+    # if subjects == [] do
+    #   ''
+    # else
+    #   Enum.join(subjects, " ")
+    # end
     # case subjects do
     #   [s | _] -> s
     #   _ -> ''
@@ -183,10 +183,11 @@ defmodule GameEngine do
 
     items =
       Enum.flat_map(containers, &game.containers[&1].items)
-      |> Enum.filter(&(&1 == item_to_pickup and game.items[&1].state == "seen"))
+      |> Enum.filter(&(String.contains?(&1, item_to_pickup) and game.items[&1].state == "seen"))
 
     case items do
       [i | _] ->
+        IO.puts "you have picked " <> game.items[i].article <> " " <> game.items[i].name
         item_updated = struct(game.items[i], state: "bag")
         struct(game, items: Map.merge(game.items, %{i => item_updated}))
 
